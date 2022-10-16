@@ -1,4 +1,4 @@
-(ns rtc.math
+(ns rtc.float
   "Floating point functions")
 
 (def epsilon

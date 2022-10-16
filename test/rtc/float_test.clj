@@ -1,14 +1,14 @@
-(ns rtc.math-test
+(ns rtc.float-test
   "Tests based and expanded the following examples:
   https://floating-point-gui.de/errors/NearlyEqualsTest.java"
   (:require [clojure.test :refer [deftest testing is]]
-            [rtc.math :as sut]))
+            [rtc.float :as float]))
 
 (defn nearly-eq
   ([a b]
    (nearly-eq a b 1e-5))
   ([a b e]
-   (sut/eq e a b)))
+   (float/eq e a b)))
 
 (defmacro is-not
   [form] `(is (not ~form)))
@@ -156,7 +156,7 @@
     (is-not (nearly-eq -1 1.000000001))
     (is-not (nearly-eq -1.000000001 1))
     (is-not (nearly-eq 1 -1.000000001))
-    (is-not (nearly-eq (* 10 Float/MIN_VALUE) (* -10 Float/MIN_VALUE) sut/epsilon))
+    (is-not (nearly-eq (* 10 Float/MIN_VALUE) (* -10 Float/MIN_VALUE) float/epsilon))
     (is-not (nearly-eq (* 1000 Float/MIN_VALUE) (* -1000 Float/MIN_VALUE)))
     (is-not (nearly-eq (* 10000 Float/MIN_VALUE) (* -10000 Float/MIN_VALUE))))
   (testing "ulp"
