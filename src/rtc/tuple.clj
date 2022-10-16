@@ -46,3 +46,11 @@
 (defn negate
   [a]
   (mapv - a))
+
+(defn mul
+  [a b]
+  (element-wise * a b))
+
+(defn div
+  [a b]
+  (element-wise / a b))

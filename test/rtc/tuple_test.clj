@@ -4,19 +4,23 @@
             [clojure.test.check.generators :as gen]
             [clojure.test.check.clojure-test :refer [defspec]]))
 
-(def safe-double
-  (gen/double* {:NaN? false :infinite? false}))
+(def float-gen
+  (gen/let [x (gen/double* {:NaN? false
+                            :infinite? false
+                            :min Float/MIN_VALUE
+                            :max Float/MAX_VALUE})]
+    (float x)))
 
 (def point-gen
-  (gen/let [x safe-double
-            y safe-double
-            z safe-double]
+  (gen/let [x float-gen
+            y float-gen
+            z float-gen]
     (tuple/point x y z)))
 
 (def vec4-gen
-  (gen/let [x safe-double
-        y safe-double
-        z safe-double]
+  (gen/let [x float-gen
+            y float-gen
+            z float-gen]
     (tuple/vec4 x y z)))
 
 (def tuple-gen
@@ -24,17 +28,17 @@
 
 (defspec point
   (prop/for-all
-   [x (gen/double* {:NaN? false})
-    y (gen/double* {:NaN? false})
-    z (gen/double* {:NaN? false})]
+   [x float-gen
+    y float-gen
+    z float-gen]
    (tuple/eq [x y z 1]
       (tuple/point x y z))))
 
 (defspec vec4
   (prop/for-all
-   [x (gen/double* {:NaN? false})
-    y (gen/double* {:NaN? false})
-    z (gen/double* {:NaN? false})]
+   [x float-gen
+    y float-gen
+    z float-gen]
    (tuple/eq [x y z 0]
       (tuple/vec4 x y z))))
 
@@ -56,7 +60,7 @@
     b tuple-gen
     c tuple-gen]
    (tuple/eq (tuple/add (tuple/add a b) c)
-      (tuple/add a (tuple/add b c)))))
+             (tuple/add a (tuple/add b c)))))
 
 (defspec sub-of-points-is-a-vector
   (prop/for-all
@@ -74,7 +78,31 @@
    [a tuple-gen]
    (tuple/eq tuple/zero (tuple/sub a a))))
 
-(defspec roundtrip
+(defspec negate-roundtrip
   (prop/for-all
    [a tuple-gen]
-   (tuple/eq a (tuple/negate (tuple/negate a)))))
+   (tuple/eq a (-> a tuple/negate tuple/negate))))
+
+(defspec mul-identity
+  (prop/for-all
+   [a tuple-gen]
+   (tuple/eq a (tuple/mul a tuple/one))))
+
+(defspec mul-zero
+  (prop/for-all
+   [a tuple-gen]
+   (tuple/eq tuple/zero (tuple/mul a tuple/zero))))
+
+(defspec mul-commutativity
+  (prop/for-all
+   [a tuple-gen
+    b tuple-gen]
+   (tuple/eq (tuple/mul a b) (tuple/mul b a))))
+
+(defspec mul-associativity
+  (prop/for-all
+   [a tuple-gen
+    b tuple-gen
+    c tuple-gen]
+   (tuple/eq (tuple/mul (tuple/mul a b) c)
+             (tuple/mul a (tuple/mul b c)))))
