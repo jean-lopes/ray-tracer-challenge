@@ -54,3 +54,26 @@
 (defn div
   [a b]
   (element-wise / a b))
+
+(defn magnitude
+  [[x y z w]]
+  (float/sqrt (+ (float/pow x 2)
+                 (float/pow y 2)
+                 (float/pow z 2)
+                 (float/pow w 2))))
+
+(defn normalize
+  [v]
+  (let [m (magnitude v)]
+    (div v [m m m m])))
+
+(defn dot
+  [a b]
+  (reduce + (mul a b)))
+
+(defn cross
+  [[ax ay az _] [bx by bz _]]
+  [(- (* ay bz) (* az by))
+   (- (* az bx) (* ax bz))
+   (- (* ax by) (* ay bx))
+   0.0])

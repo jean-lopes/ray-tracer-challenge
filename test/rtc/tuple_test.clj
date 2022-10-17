@@ -2,14 +2,20 @@
   (:require [rtc.tuple :as tuple]
             [clojure.test.check.properties :as prop]
             [clojure.test.check.generators :as gen]
-            [clojure.test.check.clojure-test :refer [defspec]]))
+            [clojure.test.check.clojure-test :refer [defspec]]
+            [clojure.test :refer [deftest testing is]]
+            [rtc.float :as float]))
+
+(defn float-gen*
+  [& {:keys [NaN? infinite? min max]}]
+  (gen/fmap float
+            (gen/double* {:NaN?      (or NaN? false)
+                          :infinite? (or infinite? false)
+                          :min       (or min Float/MIN_VALUE)
+                          :max       (or max Float/MAX_VALUE)})))
 
 (def float-gen
-  (gen/let [x (gen/double* {:NaN? false
-                            :infinite? false
-                            :min Float/MIN_VALUE
-                            :max Float/MAX_VALUE})]
-    (float x)))
+  (float-gen*))
 
 (def point-gen
   (gen/let [x float-gen
@@ -26,7 +32,7 @@
 (def tuple-gen
   (gen/one-of [point-gen vec4-gen]))
 
-(defspec point
+(defspec point-test
   (prop/for-all
    [x float-gen
     y float-gen
@@ -34,7 +40,7 @@
    (tuple/eq [x y z 1]
       (tuple/point x y z))))
 
-(defspec vec4
+(defspec vec4-test
   (prop/for-all
    [x float-gen
     y float-gen
@@ -106,3 +112,42 @@
     c tuple-gen]
    (tuple/eq (tuple/mul (tuple/mul a b) c)
              (tuple/mul a (tuple/mul b c)))))
+
+(defspec magnitude
+  (prop/for-all
+   [a float-gen]
+   (= a
+      (tuple/magnitude [a 0 0 0])
+      (tuple/magnitude [0 a 0 0])
+      (tuple/magnitude [0 0 a 0])
+      (tuple/magnitude [0 0 0 a]))))
+
+(defspec normalization
+  (prop/for-all
+   [a (float-gen* {:min 5})]
+   (every? true?
+           (map (partial float/eq 1)
+                [(tuple/magnitude (tuple/normalize [a 0 0 0]))
+                 (tuple/magnitude (tuple/normalize [0 a 0 0]))
+                 (tuple/magnitude (tuple/normalize [0 0 a 0]))
+                 (tuple/magnitude (tuple/normalize [0 0 0 a]))]))))
+
+(defspec dot-product
+  (prop/for-all
+   [a (float-gen* {:min 5})]
+   (every? true?
+           (map (partial float/eq 1)
+                [(tuple/magnitude (tuple/normalize [a 0 0 0]))
+                 (tuple/magnitude (tuple/normalize [0 a 0 0]))
+                 (tuple/magnitude (tuple/normalize [0 0 a 0]))
+                 (tuple/magnitude (tuple/normalize [0 0 0 a]))]))))
+
+
+(deftest dot-product
+  (is (float/eq 20.0 (tuple/dot (tuple/vec4 1 2 3) (tuple/vec4 2 3 4)))))
+
+(deftest cross-product
+  (let [a (tuple/vec4 1 2 3)
+        b (tuple/vec4 2 3 4)]
+    (is (tuple/eq (tuple/vec4 -1 2 -1) (tuple/cross a b)))
+    (is (tuple/eq (tuple/vec4 1 -2 1) (tuple/cross b a)))))
