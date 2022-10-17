@@ -8,3 +8,11 @@
 (defn eq
   ^Boolean [^Float a ^Float b]
   (< (abs (- a b)) *epsilon*))
+
+(defn pow
+  [n e]
+  (java.lang.Math/pow n e))
+
+(defn sqrt
+  [x]
+  (java.lang.StrictMath/sqrt x))
