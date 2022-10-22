@@ -3,7 +3,7 @@
             [clojure.test.check.properties :as prop]
             [clojure.test.check.generators :as gen]
             [clojure.test.check.clojure-test :refer [defspec]]
-            [clojure.test :refer [deftest testing is]]
+            [clojure.test :refer [deftest is]]
             [rtc.float :as float]))
 
 (defn float-gen*
@@ -141,7 +141,6 @@
                  (tuple/magnitude (tuple/normalize [0 a 0 0]))
                  (tuple/magnitude (tuple/normalize [0 0 a 0]))
                  (tuple/magnitude (tuple/normalize [0 0 0 a]))]))))
-
 
 (deftest dot-product
   (is (float/eq 20.0 (tuple/dot (tuple/vec4 1 2 3) (tuple/vec4 2 3 4)))))

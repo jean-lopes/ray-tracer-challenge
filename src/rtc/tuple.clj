@@ -17,19 +17,71 @@
 
 (defn point?
   [[_x _y _z w]]
-  (not (pos? w)))
+  (float/one? w))
 
 (defn vec4?
   [[_x _y _z w]]
-  (zero? w))
+  (float/zero? w))
 
-(defn element-wise
-  "Apply `f` to each pair of elements"
-  [f [x1 y1 z1 w1] & [[x2 y2 z2 w2]]]
+(defn zip-with
+  [f v1 v2 & vs]
+  (loop [xs v1
+         ys v2
+         zs (seq vs)]
+    (let [fs (mapv f xs ys)]
+      (if zs
+        (recur fs (first zs) (next zs))
+        fs))))
+
+(defn element-wise-naive
+  [f [x1 y1 z1 w1] [x2 y2 z2 w2]]
   [(f x1 x2)
    (f y1 y2)
    (f z1 z2)
    (f w1 w2)])
+
+(definline element-wise-inline
+  [f a b]
+  `(let [[x1# y1# z1# w1#] ~a
+         [x2# y2# z2# w2#] ~b]
+     [(~f x1# x2#)
+      (~f y1# y2#)
+      (~f z1# z2#)
+      (~f w1# w2#)]))
+
+(defmacro element-wise-macro
+  [f a b]
+  `(let [[x1# y1# z1# w1#] ~a
+         [x2# y2# z2# w2#] ~b]
+     [(~f x1# x2#)
+      (~f y1# y2#)
+      (~f z1# z2#)
+      (~f w1# w2#)]))
+
+(defmacro element-wise
+  [f a b]
+  `(let [[x1# y1# z1# w1#] ~a
+         [x2# y2# z2# w2#] ~b]
+     [(~f x1# x2#)
+      (~f y1# y2#)
+      (~f z1# z2#)
+      (~f w1# w2#)]))
+
+(defn add-map
+  [a b]
+  (map + a b))
+
+(defn add-naive
+  [a b]
+  (element-wise-naive + a b))
+
+(defn add-inline
+  [a b]
+  (element-wise-inline + a b))
+
+(defn add-macro
+  [a b]
+  (element-wise-macro + a b))
 
 (defn eq
   [a b]
@@ -37,35 +89,34 @@
 
 (defn add
   [a b]
-  (element-wise + a b))
+  (mapv + a b))
 
 (defn sub
   [a b]
-  (element-wise - a b))
+  (mapv - a b))
 
 (defn negate
-  [a]
-  (mapv - a))
+  [v]
+  (mapv - v))
 
 (defn mul
   [a b]
-  (element-wise * a b))
+  (map * a b))
 
 (defn div
   [a b]
-  (element-wise / a b))
+  (map / a b))
 
 (defn magnitude
-  [[x y z w]]
-  (float/sqrt (+ (float/pow x 2)
-                 (float/pow y 2)
-                 (float/pow z 2)
-                 (float/pow w 2))))
+  [v]
+  (->> (map float/square v)
+       (reduce +)
+       (float/sqrt)))
 
 (defn normalize
   [v]
   (let [m (magnitude v)]
-    (div v [m m m m])))
+    (div v (map (constantly m) v))))
 
 (defn dot
   [a b]
