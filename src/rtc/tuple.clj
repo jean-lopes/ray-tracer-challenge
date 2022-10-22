@@ -23,69 +23,9 @@
   [[_x _y _z w]]
   (float/zero? w))
 
-(defn zip-with
-  [f v1 v2 & vs]
-  (loop [xs v1
-         ys v2
-         zs (seq vs)]
-    (let [fs (mapv f xs ys)]
-      (if zs
-        (recur fs (first zs) (next zs))
-        fs))))
-
-(defn element-wise-naive
-  [f [x1 y1 z1 w1] [x2 y2 z2 w2]]
-  [(f x1 x2)
-   (f y1 y2)
-   (f z1 z2)
-   (f w1 w2)])
-
-(definline element-wise-inline
-  [f a b]
-  `(let [[x1# y1# z1# w1#] ~a
-         [x2# y2# z2# w2#] ~b]
-     [(~f x1# x2#)
-      (~f y1# y2#)
-      (~f z1# z2#)
-      (~f w1# w2#)]))
-
-(defmacro element-wise-macro
-  [f a b]
-  `(let [[x1# y1# z1# w1#] ~a
-         [x2# y2# z2# w2#] ~b]
-     [(~f x1# x2#)
-      (~f y1# y2#)
-      (~f z1# z2#)
-      (~f w1# w2#)]))
-
-(defmacro element-wise
-  [f a b]
-  `(let [[x1# y1# z1# w1#] ~a
-         [x2# y2# z2# w2#] ~b]
-     [(~f x1# x2#)
-      (~f y1# y2#)
-      (~f z1# z2#)
-      (~f w1# w2#)]))
-
-(defn add-map
-  [a b]
-  (map + a b))
-
-(defn add-naive
-  [a b]
-  (element-wise-naive + a b))
-
-(defn add-inline
-  [a b]
-  (element-wise-inline + a b))
-
-(defn add-macro
-  [a b]
-  (element-wise-macro + a b))
-
 (defn eq
   [a b]
-  (every? true? (element-wise float/eq a b)))
+  (every? true? (mapv float/eq a b)))
 
 (defn add
   [a b]
@@ -101,7 +41,11 @@
 
 (defn mul
   [a b]
-  (map * a b))
+  (mapv * a b))
+
+(defn mul-by-scalar
+  [v s]
+  (mapv (partial * s) v))
 
 (defn div
   [a b]
